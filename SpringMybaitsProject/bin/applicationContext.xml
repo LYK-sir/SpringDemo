@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- 加载db_properties文件 -->
+	<bean id="config" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+		<property name="locations"> 
+			<array>
+				<value>classpath:db.properties </value>
+			</array>
+		</property>
+	</bean>
+
+	<!-- 配置数据库信息（代替Mybaits的配置文件：conf.xml） -->
+     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"  destroy-method="close"		>
+     	<property name="driverClassName" value="${driver}"></property>
+        <property name="url" value="${url}"></property>
+     	<property name="username" value="${username}"></property>
+     	<property name="password" value="${password}"></property>
+     </bean>
+	
+	<!-- 在Spring IOC容器中创建MyBaits的核心类 sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		
+		<!-- 加载Mybaits配置文件 conf.xml 
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		-->
+		
+		<!-- 加载mapper.xml路径 -->
+		<property name="mapperLocations" value="org/motinyu/dao/*.xml"></property>
+	</bean>
+
+
+<!-- 第一种方式生成Mapper代理对象
+	<bean id="studentDao" class="org.motinyu.dao.impl.StudentDaoImpl">
+		将Spring配置的sqlSessionFactory对象交给Dao
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+	</bean>
+ -->
+ 
+ <!--第二种方式生成Mapper代理对象  
+ 	<bean id="studentDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+ 		<property name="mapperInterface" value="org.motinyu.dao.StudentDao"></property>
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+ 	</bean>
+ -->
+ 
+	<!--  第三种方式生成Mapper代理对象 
+		  批量产生Mapper对象在Spring容器中的id值，默认就是接口名(首字母小写)
+	 --> 
+ 	<bean id="mappers" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+ 		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+ 		<!--指定批量生产那个包中的mapper对象  -->
+ 		<property name="basePackage" value="org.motinyu.dao"></property>
+ 	</bean>
+
+ 
+ 
+	<bean id="studentService" class="org.motinyu.service.impl.StudentServiceImpl">
+		<property name="studentDao" ref="studentDao"></property>
+	</bean>
+</beans>
